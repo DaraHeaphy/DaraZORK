@@ -1,0 +1,46 @@
+{
+  "locations": {
+    "start": {
+      "description_of_area": "You find yourself in a small dilapidated cottage.",
+      "exits": {
+        "north": {
+          "id": "door-to-garden",
+          "description": "To the north there is a door exiting this old cottage",
+          "accessible": true,
+          "actionText": "As I open the old door it creaks loudly."
+        },
+        "south": null,
+        "east": null,
+        "west": {
+          "accessible": false,
+          "actionText": "An old wooden wall with no windows or doors is to my we st, I cannot pass."
+        }
+      }
+    },
+    "garden": {
+      "description-of-area": "I close it gently behind me and find myself in a small overgrown garden with a large forest all around me.",
+      "exits": {
+        "north": {
+          "id": "walkway-over-stream",
+          "description": "To the north lies a small but rapid stream, with a small wooden walkway allowing passage over it onto a winding path leading into the forest.",
+          "accessible": true,
+          "actionText": "As I cross the walkway it bend beneath my weight, barely supporting me. I manage to cross successfully into the forest and find myself in a clearing. \n In the center of the clearing lies a small pile of leaves."
+        },
+        "south": {
+          "id": "door-to-garden",
+          "description": "Leads back inside the small cottage.",
+          "accessible": true,
+          "actionText": "I make my way back inside the small, old cottage."
+        },
+        "east": {
+          "accessible": false,
+          "description": "The forest here is too thick to pass through."
+        },
+        "west": {
+          "accessible": false,
+          "description": "The forest here is too thick to pass through."
+        }
+      }
+    }
+  }
+}
