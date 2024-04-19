@@ -13,11 +13,17 @@
 
 using namespace std;
 
-struct Location {
-    string description_of_area;
+struct Exit {
     string description;
     string actionText;
-    unordered_map<string, Location*> exits;
+    string id;
+    bool accessible;
+};
+
+struct Location {
+    string description_of_area;
+    string actionText;
+    unordered_map<string, Exit> exits;
     unordered_map<string, bool> objects;
 };
 
@@ -30,14 +36,15 @@ private:
     unordered_map<string, Location> locations;
 
 public:
+    Game();
 
-    Game(Location* startLocation);
+    unordered_map<string, Location>& getLocations();
 
     void setCurrentLocationToStart();
-    void moveToLocation(const string& exit);
+    void moveToLocation(const string& direction);
     void interactWithObject(const string& objectId);
     void printAreaDescription();
-    void fillInMap(const unordered_map<string, Location>& data);
+    void fillInMap(const unordered_map<string, Location>& locationsObj);
     string getCurrentLocationDescription();
     void getCurrentLocationExits();
 

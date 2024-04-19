@@ -3,6 +3,7 @@
 
 class Locations
 {
+
 public:
     Locations();
 };

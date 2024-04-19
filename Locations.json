@@ -13,7 +13,8 @@
         "east": null,
         "west": {
           "accessible": false,
-          "actionText": "An old wooden wall with no windows or doors is to my we st, I cannot pass."
+          "description": "An old wooden wall with no wndows or doors is to my west.",
+          "actionText": "I cannot pass."
         }
       }
     },

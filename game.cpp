@@ -13,11 +13,8 @@
 using namespace std;
 using json = nlohmann::json;
 
-Game::Game(Location* startLocation) : currentLocation(nullptr), JsonFilePath("Locations.json"), File(JsonFilePath) {
-    if (!startLocation) {
-        qDebug() << "Error: Start location is null";
-        return;
-    }
+Game::Game() : currentLocation(nullptr), JsonFilePath("Locations.json"), File(JsonFilePath) {
+
     if (!File.open(QIODevice::ReadOnly)) {
         qDebug() << "Failed to open file:" << JsonFilePath;
         return;
@@ -40,92 +37,54 @@ Game::Game(Location* startLocation) : currentLocation(nullptr), JsonFilePath("Lo
 
     QJsonObject locationsObj = Document.object()["locations"].toObject();
 
-    if (locationsObj.contains("start")) {
-        QJsonObject startLocationObj = locationsObj["start"].toObject();
+    for(const QString& locationKey : locationsObj.keys()) {
+        QJsonObject locationObj = locationsObj.find(locationKey).value().toObject();
 
-        Location startLocation;
-        startLocation.description = startLocationObj.value("description").toString().toStdString();
-        startLocation.description_of_area = startLocationObj.value("description-of-area").toString().toStdString();
-
-        QJsonObject startExitsObj = startLocationObj["exits"].toObject();
-        for (const QString& exitKey : startExitsObj.keys()) {
-            QJsonObject exitDetailsObj = startExitsObj[exitKey].toObject();
-            if (exitDetailsObj.contains("id")) {
-                string exitId = exitDetailsObj["id"].toString().toStdString();
-                if (locations.find(exitId) != locations.end()) {
-                    startLocation.exits[exitKey.toStdString()] = &locations[exitId];
-                } else {
-                    qDebug() << "Exit location not found for exit:" << exitKey;
-                }
-            }
-        }
-
-        currentLocation = &startLocation;
-    } else {
-        qDebug() << "Start location not found in JSON data.";
-    }
-
-    for (const QString &locationKey : locationsObj.keys()) {
-        QJsonObject locationObj = locationsObj[locationKey].toObject();
-
-        Location loc;
-        loc.description = locationObj.value("description").toString().toStdString();
-        loc.description_of_area = locationObj.value("description-of-area").toString().toStdString();
+        Location location;
+        location.description_of_area = locationObj.value("description-of-area").toString().toStdString();
 
         QJsonObject exitsObj = locationObj["exits"].toObject();
-        for (const QString &exitKey : exitsObj.keys()) {
-            QJsonObject exitDetailsObj = exitsObj[exitKey].toObject();
-            if (exitDetailsObj.contains("id")) {
-                Location* exitLocation = &locations[exitDetailsObj["id"].toString().toStdString()];
-                if (exitLocation) {
-                    loc.exits[exitKey.toStdString()] = exitLocation;
+        if(!exitsObj.isEmpty()) {
+            for (const QString& exitKey : exitsObj.keys()) {
+                QJsonObject exitDetailsObj = exitsObj[exitKey].toObject();
+                if(exitDetailsObj.isEmpty()) {
+                    continue;
                 }
+                Exit exit;
+                if(exitDetailsObj.contains("id") && exitDetailsObj.find("id").value() != NULL){
+                    exit.id = exitDetailsObj.find("id").value().toString().toStdString();
+                }
+                if(exitDetailsObj.contains("description") && exitDetailsObj.find("description").value() != NULL){
+                    exit.description = exitDetailsObj.find("description").value().toString().toStdString();
+                }
+                if(exitDetailsObj.contains("accessible") && exitDetailsObj.find("accessible").value() != NULL){
+                    exit.accessible = exitDetailsObj.find("accessible").value().toBool();
+                }
+                if(exitDetailsObj.contains("actionText") && exitDetailsObj.find("actionText").value() != NULL){
+                    exit.actionText = exitDetailsObj.find("actionText").value().toString().toStdString();
+                }
+                location.exits[exitKey.toStdString()] = exit;
             }
         }
-        locations[locationKey.toStdString()] = loc;
+        locations[locationKey.toStdString()] = location;
     }
 
-
-
-
-    QString fileName("Locations.json");
-
-    qDebug() << Q_FUNC_INFO << "Reading from file: " << fileName;
-
-    QFile jsonFile;
-    jsonFile.setFileName(fileName);
-
-    if(!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        qWarning() << Q_FUNC_INFO << "Failed to open file";
-    }
-    else
-    {
-        QJsonDocument jsonDoc;
-        QString jsonText = jsonFile.readAll();
-        jsonFile.close();
-        qDebug() << Q_FUNC_INFO << "File contents" << jsonText;
-        QJsonParseError error;
-        jsonDoc.fromJson(jsonText.toLocal8Bit(), &error);
-
-        if(error.error == QJsonParseError::NoError)
-        {
-            QVariant variant = jsonDoc.object().toVariantMap();
-
-            unordered_map<string, Location> data = variant.value<unordered_map<string, Location>>();
-
-            fillInMap(data);
-        }
-        else
-        {
-            qWarning() << Q_FUNC_INFO << "JSON Parse Error: " << error.errorString();
-        }
+    if(locations.find("start") != locations.end()) {
+        currentLocation = &locations.find("start")->second;
+    } else {
+        throw std::runtime_error("No location with key 'start' found");
     }
 
 }
 
-void Game::fillInMap(const unordered_map<string, Location>& data) {
-    locations = data;
+
+
+unordered_map<string, Location>& Game::getLocations(){
+    return this->locations;
+}
+
+void Game::fillInMap(const unordered_map<string, Location>& locationsObj) {
+    locations = locationsObj;
 }
 
 void Game::setCurrentLocationToStart() {
@@ -137,9 +96,9 @@ void Game::setCurrentLocationToStart() {
     }
 }
 
-void Game::moveToLocation(const string& exit) {
-    if (currentLocation->exits.find(exit) != currentLocation->exits.end()) {
-        currentLocation = currentLocation->exits[exit];
+void Game::moveToLocation(const string& direction) {
+    if (currentLocation->exits.find(direction) != currentLocation->exits.end()) {
+        currentLocation = &locations[direction];
         printAreaDescription();
     } else {
         cout << "Cannot move in that direction!" << endl;
@@ -156,11 +115,11 @@ void Game::interactWithObject(const string& objectId) {
     } else {
         cout << "Object not found!" << endl;
     }
-}
+};
 
 string Game::getCurrentLocationDescription() {
     if (currentLocation != nullptr) {
-        return currentLocation->description;
+        return currentLocation->description_of_area;
     } else {
         return "No current location set.";
     }
@@ -175,15 +134,8 @@ void Game::getCurrentLocationExits() {
 }
 
 void Game::printAreaDescription() {
-    cout << currentLocation->description_of_area << endl;
-    cout << "Exits:" << endl;
-    cout << "Number of exits: " << currentLocation->exits.size() << endl;
+    cout << currentLocation->description_of_area;
     for (const auto& exit : currentLocation->exits) {
-        if (exit.second != nullptr && !exit.second->description.empty()) {
-            cout << "  " << exit.first << ": " << exit.second->description << endl;
-            cout << "    Action Text: " << exit.second->actionText << endl; // Corrected
-        } else {
-            cout << "  " << exit.first << ": (No exit description)" << endl;
-        }
+        cout << exit.second.description << endl;
     }
 }

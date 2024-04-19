@@ -14,15 +14,21 @@ TEMPLATE = app
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    directions.cpp \
     game.cpp \
+    gamemanager.cpp \
     locations.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    movement.cpp
 
 HEADERS += \
+    directions.h \
     game.h \
+    gamemanager.h \
     locations.h \
-    mainwindow.h
+    mainwindow.h \
+    movement.h
 
 FORMS += \
     mainwindow.ui
